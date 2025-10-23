@@ -6,8 +6,16 @@ const express = require('express');
 
 
 
+
+const mongoose = require('mongoose');
+const cors = require('cors');
+const app = express();
+app.use(cors());
+app.use(express.json());
+
 // Importar modelo de usuario
 const User = require('./models/User');
+
 
 // Conexión a MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI, {
