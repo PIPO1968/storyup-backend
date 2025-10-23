@@ -9,19 +9,47 @@ app.use(express.json());
 
 // Conexión a MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+    useNewUrlParser: true,
+    useUnifiedTopology: true
 })
-.then(() => console.log('Conectado a MongoDB'))
-.catch((err) => console.error('Error de conexión a MongoDB:', err));
+    .then(() => console.log('Conectado a MongoDB'))
+    .catch((err) => console.error('Error de conexión a MongoDB:', err));
+
+
+// Importar modelo de usuario
+const User = require('./models/User');
 
 // Ruta de prueba
 app.get('/', (req, res) => {
-  res.json({ mensaje: 'API de StoryUp funcionando correctamente' });
+    res.json({ mensaje: 'API de StoryUp funcionando correctamente' });
+});
+
+// Ruta para registrar usuario
+app.post('/register', async (req, res) => {
+    try {
+        const { nombre, apellido, nick, email, password, tipoUsuario, tipoCentro, nombreCentro, curso } = req.body;
+        // Validación básica
+        if (!nombre || !apellido || !nick || !email || !password || !tipoUsuario || !tipoCentro || !nombreCentro || !curso) {
+            return res.status(400).json({ error: 'Faltan campos obligatorios' });
+        }
+        // Comprobar si el email o nick ya existen
+        const existeEmail = await User.findOne({ email });
+        const existeNick = await User.findOne({ nick });
+        if (existeEmail) return res.status(409).json({ error: 'El email ya está registrado' });
+        if (existeNick) return res.status(409).json({ error: 'El nick ya está registrado' });
+        // Guardar usuario
+        const nuevoUsuario = new User({ nombre, apellido, nick, email, password, tipoUsuario, tipoCentro, nombreCentro, curso });
+        await nuevoUsuario.save();
+        res.status(201).json({ mensaje: 'Usuario registrado correctamente' });
+    } catch (err) {
+        res.status(500).json({ error: 'Error al registrar usuario', detalle: err.message });
+    }
 });
 
 // Puerto para Render (usa variable de entorno PORT)
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Servidor backend escuchando en el puerto ${PORT}`);
+    console.log(`Servidor backend escuchando en el puerto ${PORT}`);
 });
+
+// Cambio menor para forzar redeploy en Render
