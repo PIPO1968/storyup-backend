@@ -3,8 +3,6 @@ const express = require('express');
 
 
 
-// Importar modelo de usuario
-const User = require('./models/User');
 
 // Ruta para login de usuario
 app.post('/login', async (req, res) => {
@@ -40,8 +38,6 @@ mongoose.connect(process.env.MONGODB_URI, {
     .catch((err) => console.error('Error de conexión a MongoDB:', err));
 
 
-// Importar modelo de usuario
-const User = require('./models/User');
 
 // Ruta de prueba
 app.get('/', (req, res) => {
