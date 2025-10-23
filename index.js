@@ -4,6 +4,19 @@ const express = require('express');
 
 
 
+
+
+// Importar modelo de usuario
+const User = require('./models/User');
+
+// Conexión a MongoDB Atlas
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+    .then(() => console.log('Conectado a MongoDB'))
+    .catch((err) => console.error('Error de conexión a MongoDB:', err));
+
 // Ruta para login de usuario
 app.post('/login', async (req, res) => {
     try {
@@ -22,12 +35,7 @@ app.post('/login', async (req, res) => {
         res.status(500).json({ error: 'Error al iniciar sesión', detalle: err.message });
     }
 });
-const mongoose = require('mongoose');
-const cors = require('cors');
 
-const app = express();
-app.use(cors());
-app.use(express.json());
 
 // Conexión a MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI, {
