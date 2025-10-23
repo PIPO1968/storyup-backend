@@ -1,3 +1,21 @@
+// Ruta para login de usuario
+app.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Faltan email o contraseña' });
+        }
+        const user = await User.findOne({ email, password });
+        if (!user) {
+            return res.status(401).json({ error: 'Credenciales incorrectas' });
+        }
+        // Devolver solo datos básicos, no password
+        const { _id, nombre, apellido, nick, tipoUsuario, tipoCentro, nombreCentro, curso, email: userEmail } = user;
+        res.json({ _id, nombre, apellido, nick, tipoUsuario, tipoCentro, nombreCentro, curso, email: userEmail });
+    } catch (err) {
+        res.status(500).json({ error: 'Error al iniciar sesión', detalle: err.message });
+    }
+});
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
