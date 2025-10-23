@@ -1,3 +1,10 @@
+require('dotenv').config();
+const express = require('express');
+
+
+// Importar modelo de usuario
+const User = require('./models/User');
+
 // Ruta para login de usuario
 app.post('/login', async (req, res) => {
     try {
@@ -16,8 +23,6 @@ app.post('/login', async (req, res) => {
         res.status(500).json({ error: 'Error al iniciar sesión', detalle: err.message });
     }
 });
-require('dotenv').config();
-const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
