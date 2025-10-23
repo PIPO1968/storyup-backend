@@ -2,8 +2,6 @@ require('dotenv').config();
 const express = require('express');
 
 
-// Importar modelo de usuario
-const User = require('./models/User');
 
 // Ruta para login de usuario
 app.post('/login', async (req, res) => {
