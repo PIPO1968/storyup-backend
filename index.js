@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 const express = require('express');
 
@@ -32,8 +33,13 @@ app.post('/login', async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({ error: 'Faltan email o contraseña' });
         }
-        const user = await User.findOne({ email, password });
+        const user = await User.findOne({ email });
         if (!user) {
+            return res.status(401).json({ error: 'Credenciales incorrectas' });
+        }
+        // Comparar password con hash
+        const passwordOk = await bcrypt.compare(password, user.password);
+        if (!passwordOk) {
             return res.status(401).json({ error: 'Credenciales incorrectas' });
         }
         // Devolver solo datos básicos, no password
@@ -73,8 +79,11 @@ app.post('/register', async (req, res) => {
         const existeNick = await User.findOne({ nick });
         if (existeEmail) return res.status(409).json({ error: 'El email ya está registrado' });
         if (existeNick) return res.status(409).json({ error: 'El nick ya está registrado' });
+        // Hashear password
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
         // Guardar usuario
-        const nuevoUsuario = new User({ nombre, apellido, nick, email, password, tipoUsuario, tipoCentro, nombreCentro, curso });
+        const nuevoUsuario = new User({ nombre, apellido, nick, email, password: passwordHash, tipoUsuario, tipoCentro, nombreCentro, curso });
         await nuevoUsuario.save();
         res.status(201).json({ mensaje: 'Usuario registrado correctamente' });
     } catch (err) {
