@@ -1,3 +1,14 @@
+// Endpoint para estadísticas de usuarios inscritos y online
+app.get('/stats/users', async (req, res) => {
+    try {
+        const total = await User.countDocuments();
+        // Para usuarios online, aquí solo se simula. Para real, se requiere lógica de sesión activa.
+        const online = 0; // TODO: implementar lógica real de usuarios online
+        res.json({ total, online });
+    } catch (err) {
+        res.status(500).json({ error: 'Error al obtener estadísticas', detalle: err.message });
+    }
+});
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
