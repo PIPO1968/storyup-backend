@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 const express = require('express');
@@ -16,6 +17,9 @@ app.use(express.json());
 
 // Importar modelo de usuario
 const User = require('./models/User');
+
+// Modelo de eventos/acciones
+const Event = require('./models/Event');
 
 
 // Conexión a MongoDB Atlas
@@ -42,11 +46,59 @@ app.post('/login', async (req, res) => {
         if (!passwordOk) {
             return res.status(401).json({ error: 'Credenciales incorrectas' });
         }
-        // Devolver solo datos básicos, no password
+        // Generar token JWT
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+        // Devolver datos y token
         const { _id, nombre, apellido, nick, tipoUsuario, tipoCentro, nombreCentro, curso, email: userEmail } = user;
-        res.json({ _id, nombre, apellido, nick, tipoUsuario, tipoCentro, nombreCentro, curso, email: userEmail });
+        res.json({
+            token,
+            user: { _id, nombre, apellido, nick, tipoUsuario, tipoCentro, nombreCentro, curso, email: userEmail }
+        });
     } catch (err) {
         res.status(500).json({ error: 'Error al iniciar sesión', detalle: err.message });
+    }
+});
+// Middleware para autenticar JWT
+function auth(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+        req.userId = decoded.userId;
+        next();
+    } catch (err) {
+        return res.status(401).json({ error: 'Token inválido' });
+    }
+}
+
+// Endpoint para obtener datos del usuario autenticado
+app.get('/me', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+        if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+        const { _id, nombre, apellido, nick, tipoUsuario, tipoCentro, nombreCentro, curso, email } = user;
+        res.json({ _id, nombre, apellido, nick, tipoUsuario, tipoCentro, nombreCentro, curso, email });
+    } catch (err) {
+        res.status(500).json({ error: 'Error al obtener usuario', detalle: err.message });
+    }
+});
+
+
+// Endpoint generalizado para guardar cualquier acción/evento
+app.post('/event', auth, async (req, res) => {
+    try {
+        const { type, data } = req.body;
+        if (!type || !data) {
+            return res.status(400).json({ error: 'Faltan campos obligatorios: type y data' });
+        }
+        const event = new Event({ userId: req.userId, type, data });
+        await event.save();
+        res.status(201).json({ mensaje: 'Evento guardado', event });
+    } catch (err) {
+        res.status(500).json({ error: 'Error al guardar evento', detalle: err.message });
     }
 });
 
