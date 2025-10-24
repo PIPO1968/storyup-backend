@@ -86,6 +86,22 @@ app.get('/me', auth, async (req, res) => {
     }
 });
 
+// Endpoint para actualizar datos básicos del usuario autenticado
+app.put('/me', auth, async (req, res) => {
+    try {
+        const { nombre, nick, curso } = req.body;
+        const user = await User.findById(req.userId);
+        if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+        if (nombre !== undefined) user.nombre = nombre;
+        if (nick !== undefined) user.nick = nick;
+        if (curso !== undefined) user.curso = curso;
+        await user.save();
+        res.json({ mensaje: 'Perfil actualizado', user });
+    } catch (err) {
+        res.status(500).json({ error: 'Error al actualizar perfil', detalle: err.message });
+    }
+});
+
 
 // Endpoint generalizado para guardar cualquier acción/evento
 app.post('/event', auth, async (req, res) => {
