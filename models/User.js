@@ -10,7 +10,8 @@ const userSchema = new mongoose.Schema({
     tipoCentro: { type: String, enum: ['CEIP', 'IES'], required: true },
     nombreCentro: { type: String, required: true },
     curso: { type: String, enum: ['3º ESO', '4º ESO', '5º ESO', '6º ESO', '7º ESO', '8º ESO', '1º INST', '2º INST'], required: true },
-    fechaRegistro: { type: Date, default: Date.now }
+    fechaRegistro: { type: Date, default: Date.now },
+    lastActive: { type: Date }
 });
 
 module.exports = mongoose.model('User', userSchema);

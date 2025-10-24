@@ -1,25 +1,7 @@
-// Endpoint para estadísticas de usuarios inscritos y online
-app.get('/stats/users', async (req, res) => {
-    try {
-        const total = await User.countDocuments();
-        // Para usuarios online, aquí solo se simula. Para real, se requiere lógica de sesión activa.
-        const online = 0; // TODO: implementar lógica real de usuarios online
-        res.json({ total, online });
-    } catch (err) {
-        res.status(500).json({ error: 'Error al obtener estadísticas', detalle: err.message });
-    }
-});
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 const express = require('express');
-
-
-
-
-
-
-
 const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
@@ -70,7 +52,7 @@ app.post('/login', async (req, res) => {
     }
 });
 // Middleware para autenticar JWT
-function auth(req, res, next) {
+async function auth(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Token no proporcionado' });
@@ -79,6 +61,8 @@ function auth(req, res, next) {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
         req.userId = decoded.userId;
+        // Actualizar lastActive en cada petición autenticada
+        await User.findByIdAndUpdate(decoded.userId, { lastActive: new Date() });
         next();
     } catch (err) {
         return res.status(401).json({ error: 'Token inválido' });
@@ -129,6 +113,18 @@ app.post('/event', auth, async (req, res) => {
     }
 });
 
+// Endpoint para estadísticas de usuarios inscritos y online
+app.get('/stats/users', async (req, res) => {
+    try {
+        const total = await User.countDocuments();
+        // Usuarios online: lastActive en los últimos 2 minutos
+        const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+        const online = await User.countDocuments({ lastActive: { $gte: twoMinutesAgo } });
+        res.json({ total, online });
+    } catch (err) {
+        res.status(500).json({ error: 'Error al obtener estadísticas', detalle: err.message });
+    }
+});
 
 // Conexión a MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI, {
