@@ -39,8 +39,18 @@ app.post('/login', async (req, res) => {
         if (!passwordOk) {
             return res.status(401).json({ error: 'Credenciales incorrectas' });
         }
-        // Generar token JWT
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+        // Generar token JWT (2 horas)
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '2h' });
+        // Endpoint para refrescar el token si el usuario está activo
+        app.post('/refresh-token', auth, async (req, res) => {
+            try {
+                // Generar nuevo token (2 horas)
+                const token = jwt.sign({ userId: req.userId }, process.env.JWT_SECRET || 'secret', { expiresIn: '2h' });
+                res.json({ token });
+            } catch (err) {
+                res.status(500).json({ error: 'Error al refrescar token', detalle: err.message });
+            }
+        });
         // Devolver datos y token
         const { _id, nombre, apellido, nick, tipoUsuario, tipoCentro, nombreCentro, curso, email: userEmail } = user;
         res.json({
