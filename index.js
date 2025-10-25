@@ -1,3 +1,37 @@
+// Multer para manejo de archivos
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configuración de almacenamiento para los avatares
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const dir = path.join(__dirname, 'uploads', 'avatars');
+        fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: function (req, file, cb) {
+        cb(null, req.userId + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage });
+// Endpoint para subir avatar
+app.post('/me/avatar', auth, upload.single('avatar'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No se recibió archivo' });
+        // Guardar la ruta del avatar en el usuario
+        const avatarUrl = `/uploads/avatars/${req.userId}${path.extname(req.file.originalname)}`;
+        const user = await User.findById(req.userId);
+        if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+        user.avatar = avatarUrl;
+        await user.save();
+        res.json({ avatarUrl });
+    } catch (err) {
+        res.status(500).json({ error: 'Error al subir avatar', detalle: err.message });
+    }
+});
+// Servir archivos estáticos de avatares
+app.use('/uploads/avatars', express.static(path.join(__dirname, 'uploads', 'avatars')));
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
